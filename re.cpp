@@ -1,11 +1,6 @@
-#include <iostream>
-#include <memory>
-#include <variant>
-#include <string>
-#include <optional>
 #include <cctype> // isalnum
-#include <vector>
 #include <utility>
+#include "re.hpp"
 
 // TODO: it might be that i don't actually need to manually store /
 // restore state in `parseT` / the grammar maybe LL(1) after all. what
@@ -46,12 +41,6 @@
 // user	0m0.016s
 // sys	0m0.059s
 
-struct RegExp;
-struct Sym { char c; };
-struct Seq { std::unique_ptr<RegExp> l, r; };
-struct Alt { std::unique_ptr<RegExp> l, r; };
-struct Star { std::unique_ptr<RegExp> r; };
-struct RegExp { std::variant<Sym, Seq, Alt, Star> node; };
 
 auto sym(const char c) -> RegExp {
   return RegExp{Sym{c}};
@@ -199,17 +188,8 @@ std::optional<RegExp> parse(std::string_view s) {
 }
 
 
-
-
 // COMPILER
 
-struct Symbol { char c; };
-struct Jump { unsigned l; };
-struct Fork { unsigned l1; unsigned l2; };
-struct Label { unsigned l; };
-struct Match {};
-using Instr = std::variant<Symbol, Jump, Fork, Label, Match>;
-using Code = std::vector<Instr>;
 
 std::ostream& operator<<(std::ostream& out, const Instr& i) {
   std::visit(overload {
@@ -425,35 +405,4 @@ bool match(const Code& code, std::string_view s) {
   }
 
   return false;
-}
-
-
-int main(const int argc, const char* argv[]) {
-  if (argc < 2) {
-    std::cout << "usage: re <regex> [<str>]\n";
-    return 1;
-  }
-
-  auto r = parse(argv[1]);
-  if (!r) {
-    std::cout << "parse failed\n";
-    return 1;
-  }
-
-  // std::cout << *r << '\n';
-
-  auto code { compile(*r) };
-
-  if (argc >= 3) {
-    // test against arg
-    const auto m { match(code, argv[2]) };
-    std::cout << (m ? "" : "no ") << "match\n";
-  }
-  else {
-    // else dump code
-    for (auto i : code) {
-      std::cout << i << '\n';
-    }
-  }
-
 }
