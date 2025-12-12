@@ -406,3 +406,24 @@ bool match(const Code& code, std::string_view s) {
 
   return false;
 }
+
+MatchResult match(std::string_view re, std::string_view str) {
+  auto r = parse(re);
+  if (!r) return MatchResult::parse_error;
+  return match(compile(*r), str) ? MatchResult::match : MatchResult::no_match;
+}
+
+std::ostream& operator<<(std::ostream& out, const MatchResult& result) {
+  switch (result) {
+  case MatchResult::parse_error:
+    out << "parse_error";
+    break;
+  case MatchResult::no_match:
+    out << "no_match";
+    break;
+  case MatchResult::match:
+    out << "match";
+    break;
+  }
+  return out;
+}
