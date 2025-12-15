@@ -4,9 +4,6 @@
 
 // TODO: could strip the labels instruction from (relabled) code.
 
-// TODO: perhaps do the trick of using ints and a "current gen"
-// counter for flags, to avoid having to touch all flags in `reset`.
-
 // TODO: i don't need to keep two set of flags around
 
 // TODO: is including two labels in Fork redundant? (does one branch
@@ -294,11 +291,12 @@ Code compile(const RegExp& r) {
 
 struct pcstack {
   std::vector<unsigned> stack;
-  std::vector<bool> flags;
+  std::vector<unsigned> flags;
+  unsigned gen { 1 };
 
   pcstack(std::size_t size)
     : stack {} // could reserve capacity? (perhaps by calling `reserve` in the ctor body?)
-    , flags { std::vector<bool>(size) }
+    , flags { std::vector<unsigned>(size) }
   {}
 
   bool empty() {
@@ -306,9 +304,9 @@ struct pcstack {
   }
 
   void push(const unsigned pc) {
-    if (!flags.at(pc)) {
+    if (flags.at(pc) != gen) {
       stack.push_back(pc);
-      flags[pc] = true;
+      flags[pc] = gen; // set this flag
     }
   }
 
@@ -319,17 +317,13 @@ struct pcstack {
     return val;
   }
 
-  // i think this is ok asymptotically, since we potentially already
-  // touch every element of this at each char step. i.e. if the
-  // asymptotics is O(nm), then this preserves that. (where n is
-  // length of string, and m is number of instructions.) probably
-  // makes constant worse though, since now we guarantee we do O(m)
-  // work at ech character, even though there may be far fewer threads
-  // than that in-flight.
   void reset() {
-    // assume stack is already empty
-    // (aside: i see noticed that this ends up using `memset`)
-    flags.assign(flags.size(), false);
+    gen++; // clear all flags
+    // TODO: how to add a reasonable test for this?
+    if (gen == 0) { // handle wrap-around
+      flags.assign(flags.size(), 0);
+      gen = 1;
+    }
   }
 };
 
