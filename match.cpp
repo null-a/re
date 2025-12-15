@@ -13,8 +13,6 @@ int main(const int argc, const char* argv[]) {
     return 1;
   }
 
-  // std::cout << *r << '\n';
-
   auto code { compile(*r) };
 
   if (argc >= 3) {
@@ -23,10 +21,10 @@ int main(const int argc, const char* argv[]) {
     std::cout << (m ? "" : "no ") << "match\n";
   }
   else {
-    // else dump code
+    // else dump expression / code
+    std::cout << *r << '\n';
     for (auto i : code) {
       std::cout << i << '\n';
     }
   }
-
 }
