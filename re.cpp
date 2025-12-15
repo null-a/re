@@ -318,6 +318,7 @@ struct pcstack {
   }
 
   void reset() {
+    // assume stack is already empty
     gen++; // clear all flags
     // TODO: how to add a reasonable test for this?
     if (gen == 0) { // handle wrap-around
