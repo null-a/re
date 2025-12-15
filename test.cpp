@@ -4,13 +4,14 @@
 #include "re.hpp"
 
 constexpr std::array cases {
-  std::make_tuple("", "", MatchResult::parse_error),
-  std::make_tuple("|", "", MatchResult::parse_error),
-  std::make_tuple("a|", "", MatchResult::parse_error),
-  std::make_tuple("|a", "", MatchResult::parse_error),
-  std::make_tuple("()", "", MatchResult::parse_error),
   std::make_tuple("a(", "", MatchResult::parse_error),
   std::make_tuple("a)", "", MatchResult::parse_error),
+
+  std::make_tuple("", "", MatchResult::match),
+  std::make_tuple("", "a", MatchResult::no_match),
+
+  std::make_tuple("()", "", MatchResult::match),
+  std::make_tuple("()", "a", MatchResult::no_match),
 
   std::make_tuple("a", "a", MatchResult::match),
   std::make_tuple("a", "", MatchResult::no_match),
@@ -20,6 +21,17 @@ constexpr std::array cases {
   std::make_tuple("ab", "", MatchResult::no_match),
   std::make_tuple("ab", "a", MatchResult::no_match),
   std::make_tuple("ab", "b", MatchResult::no_match),
+
+  std::make_tuple("|", "", MatchResult::match),
+  std::make_tuple("|", "a", MatchResult::no_match),
+
+  std::make_tuple("a|", "", MatchResult::match),
+  std::make_tuple("a|", "a", MatchResult::match),
+  std::make_tuple("a|", "b", MatchResult::no_match),
+
+  std::make_tuple("|a", "", MatchResult::match),
+  std::make_tuple("|a", "a", MatchResult::match),
+  std::make_tuple("|a", "b", MatchResult::no_match),
 
   std::make_tuple("a|b", "a", MatchResult::match),
   std::make_tuple("a|b", "b", MatchResult::match),

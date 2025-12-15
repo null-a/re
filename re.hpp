@@ -8,11 +8,12 @@
 #include <variant>
 
 struct RegExp;
+struct Empty {};
 struct Sym { char c; };
 struct Seq { std::unique_ptr<RegExp> l, r; };
 struct Alt { std::unique_ptr<RegExp> l, r; };
 struct Star { std::unique_ptr<RegExp> r; };
-struct RegExp { std::variant<Sym, Seq, Alt, Star> node; };
+struct RegExp { std::variant<Empty, Sym, Seq, Alt, Star> node; };
 
 struct Symbol { char c; };
 struct Jump { unsigned l; };

@@ -2,11 +2,6 @@
 #include <utility>
 #include "re.hpp"
 
-// TODO: this parser is actually a bit too restrictive. / you might
-// want to match the language {'', 'a'} (with e.g. "|a") but you can't
-// currently express that i think. one way to do this might be to have
-// `T -> {S}` rather than `T -> S { S }`?
-
 // TODO: could strip the labels instruction from (relabled) code.
 
 // TODO: perhaps do the trick of using ints and a "current gen"
@@ -33,6 +28,9 @@
 // sys	0m0.059s
 
 
+auto empty() -> RegExp {
+  return RegExp{Empty{}};
+}
 auto sym(const char c) -> RegExp {
   return RegExp{Sym{c}};
 }
@@ -50,6 +48,9 @@ template<class... Ts> struct overload : Ts... { using Ts::operator()...; };
 
 std::ostream& operator<<(std::ostream& out, const RegExp& r) {
   return std::visit(overload {
+    [&out](const Empty&) -> std::ostream& {
+      return out << "empty()";
+    },
     [&out](const Sym& r) -> std::ostream& {
       return out << "sym(" << r.c << ')';
     },
@@ -106,7 +107,7 @@ struct Parser {
 
   /*
     E -> T { | T }    -- alt                              Expression ::= Sequence { "|" Sequence }
-    T -> S { S }      -- seq  (by juxtaposition)          Sequence or Term
+    T -> { S }        -- seq  (by juxtaposition)          Sequence or Term
     S -> P [*]        -- star (where [.] means optional)  Factor
     P -> sym | ( E )  -- symbols or parens                Atom
     ... any alphanum char ...                             Symbol
@@ -125,9 +126,7 @@ struct Parser {
   }
 
   std::optional<RegExp> parseT() {
-    auto s1 = parseS();
-    if (!s1) return {};
-    auto res = std::move(*s1);
+    auto res = empty();
     while (true) {
       // parsing an S necessarily requires parsing a P, which we can
       // commit to if the next character is either a symbol or an
@@ -201,6 +200,8 @@ std::ostream& operator<<(std::ostream& out, const Instr& i) {
 
 void emit(Code& code, unsigned& label, const RegExp& r) {
   std::visit(overload {
+    [&code, &label](const Empty&) {
+    },
     [&code, &label](const Sym& r) {
       code.emplace_back(Symbol{r.c});
     },
