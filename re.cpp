@@ -2,15 +2,6 @@
 #include <utility>
 #include "re.hpp"
 
-// TODO: it might be that i don't actually need to manually store /
-// restore state in `parseT` / the grammar maybe LL(1) after all. what
-// might work, is to check whether the next char is either a symbol or
-// an opening paren, and if so commit to parsing another S else
-// return. if, after commit to parse another S we encounter a failure,
-// the whole parse fails. (this is different to what i'm doing now,
-// which is to try to speculatively parse additional S, and restore
-// things if that fails.)
-
 // TODO: this parser is actually a bit too restrictive. / you might
 // want to match the language {'', 'a'} (with e.g. "|a") but you can't
 // currently express that i think. one way to do this might be to have
@@ -137,19 +128,14 @@ struct Parser {
     auto s1 = parseS();
     if (!s1) return {};
     auto res = std::move(*s1);
-    // the grammer isn't LL(1) (or something) here. (i.e. peeking just
-    // one character ahead isn't sufficient) we only know if there are
-    // more `S` by trying to parse them (unlike `alt` where we commit
-    // after seeing a '|') so we need to save the state, and restore
-    // on failure. without this, e.g. "a(" would incorrectly parse as
-    // sym('a') rather than be a parse error.
     while (true) {
-      auto save = s; // save
+      // parsing an S necessarily requires parsing a P, which we can
+      // commit to if the next character is either a symbol or an
+      // opening paren.
+      const auto c = peek();
+      if (!(c && (isalnum(*c) || *c == '('))) break;
       auto s2 = parseS();
-      if (!s2) {
-        s = save; // restore
-        break;
-      }
+      if (!s2) return {};
       res = seq(std::move(res), std::move(*s2));
     }
     return res;
