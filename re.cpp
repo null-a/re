@@ -1,5 +1,6 @@
 #include <cctype> // isalnum
 #include <utility>
+#include <algorithm>
 #include "re.hpp"
 
 // TODO: could strip the labels instruction from (relabled) code.
@@ -235,14 +236,14 @@ void emit(Code& code, unsigned& label, const RegExp& r) {
 // the returned vector is a map from labels to line numbers
 // (implementation assumes labels start at zero and are contiguous)
 std::vector<unsigned> labeltable(const Code& code) {
-  // TODO: there's probably something like `count` in the stdlib?
-  auto label_count { 0u };
-  for (auto instr : code) {
-    if (std::holds_alternative<Label>(instr)) {
-      label_count++;
-    }
-  }
-  std::vector<unsigned> table (label_count);
+  // i could avoid recounting labels here, since when i call `relabel`
+  // (from `compile`), i know how many labels were generated. but
+  // being able to call `relabel` without worry about this could
+  // potentially be useful?
+  auto label_count = std::count_if(code.begin(), code.end(), [](auto& instr) {
+    return std::holds_alternative<Label>(instr);
+  });
+  std::vector<unsigned> table (static_cast<unsigned>(label_count));
   for (auto line=0u; line<code.size(); ++line) {
     if (std::holds_alternative<Label>(code[line])) {
       const auto label { std::get<Label>(code[line]).l };
